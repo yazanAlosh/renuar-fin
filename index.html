@@ -1,147 +1,209 @@
-<script>
-/* ============ إعدادات وتخزين محلي ============ */
-const LS_KEY = 'renuarDB';
-const HOST_PASS = '1234';       // غيّرها إن أردت
-let DB = [];
-try { DB = JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch { DB = []; }
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8">
+  <title>Renuar Finder</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: url('https://img.freepik.com/free-photo/clothing-store-interior-modern-shopping-mall_1232-4297.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: #222;
+      text-align: center;
+    }
+    header {
+      background: rgba(0, 51, 102, 0.85);
+      color: white;
+      padding: 15px;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    main {
+      padding: 20px;
+      background: rgba(255,255,255,0.9);
+      margin: 30px auto;
+      max-width: 700px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    button {
+      background: #003366;
+      color: white;
+      cursor: pointer;
+      border: none;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #0055aa;
+    }
+    #results, #localList {
+      margin-top: 20px;
+      text-align: left;
+      background: #f9f9f9;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    #hostArea {
+      margin-top: 20px;
+      background: #eef;
+      padding: 15px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <header>🔎 חיפוש פריטים - Renuar Finder</header>
 
-/* ============ أدوات عامة ============ */
-const $ = (sel, root=document) => root.querySelector(sel);
-const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
-const byId = id => document.getElementById(id) || null;
+  <main>
+    <h2>חפש פריט לפי מק״ט או שם</h2>
+    <input id="searchInput" type="text" placeholder="הזן מק״ט או שם פריט">
+    <br>
+    <button id="btnLocal">חפש מקומי</button>
+    <button id="btnRenuar">חפש ברנואר</button>
+    <button id="btnHome">פתח אתר רנואר</button>
+    <button id="btnClear">נקה</button>
+    <p id="msg"></p>
 
-function setText(idOrEl, text) {
-  const el = typeof idOrEl === 'string' ? byId(idOrEl) : idOrEl;
-  if (el) el.textContent = text;
-}
+    <div id="results"></div>
+    <div id="localList"></div>
 
-function normalize(str) {
-  return (str || '')
-    .replace(/[\u0591-\u05C7]/g, '')  // إزالة التشكيل العبري
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toLowerCase();
-}
+    <hr>
 
-/* ============ دوال العمل الأساسية ============ */
-function renUrl(q) {
-  return 'https://www.renuar.co.il/catalogsearch/result/?q=' + encodeURIComponent(q);
-}
+    <div id="loginBox">
+      <h3>🔑 כניסת Host</h3>
+      <input id="hostPass" type="password" placeholder="סיסמת Host">
+      <button id="btnLogin">התחבר</button>
+    </div>
 
-function renderList(items) {
-  const cont = byId('results') || byId('localList');
-  if (!cont) return;
-  if (!items || !items.length) {
-    cont.innerHTML = 'אין תוצאות עדיין.';
-    return;
+    <div id="hostArea" style="display:none;">
+      <h3>➕ הוספת מוצר חדש</h3>
+      <input id="sku" placeholder="מק״ט"><br>
+      <input id="name" placeholder="שם"><br>
+      <input id="price" placeholder="מחיר"><br>
+      <input id="link" placeholder="קישור (לא חובה)"><br>
+      <button id="btnAdd">הוסף מוצר</button>
+    </div>
+  </main>
+
+  <script>
+  /* ============ إعدادات وتخزين محلي ============ */
+  const LS_KEY = 'renuarDB';
+  const HOST_PASS = '1234'; // غيّرها إن أردت
+  let DB = [];
+  try { DB = JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch { DB = []; }
+
+  /* ============ أدوات عامة ============ */
+  const $ = (sel, root=document) => root.querySelector(sel);
+  const byId = id => document.getElementById(id) || null;
+  function setText(idOrEl, text) {
+    const el = typeof idOrEl === 'string' ? byId(idOrEl) : idOrEl;
+    if (el) el.textContent = text;
   }
-  cont.innerHTML = items.map(p => `
-    <p><b>${p.name || ''}</b> (SKU: ${p.sku || ''}) — ₪${p.price || '-'}
-    ${p.link ? ` — <a href="${p.link}" target="_blank" rel="noopener">קישור</a>` : ''}</p>
-  `).join('');
-}
+  function normalize(str) {
+    return (str || '').replace(/[\u0591-\u05C7]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+  }
 
-function readQuery() {
-  const inp = byId('searchInput') || byId('q');
-  return normalize(inp && inp.value);
-}
+  /* ============ دوال العمل الأساسية ============ */
+  function renUrl(q) {
+    return 'https://www.renuar.co.il/catalogsearch/result/?q=' + encodeURIComponent(q);
+  }
+  function renderList(items) {
+    const cont = byId('results') || byId('localList');
+    if (!cont) return;
+    if (!items || !items.length) { cont.innerHTML = 'אין תוצאות עדיין.'; return; }
+    cont.innerHTML = items.map(p => `
+      <p><b>${p.name || ''}</b> (SKU: ${p.sku || ''}) — ₪${p.price || '-'}
+      ${p.link ? ` — <a href="${p.link}" target="_blank" rel="noopener">קישור</a>` : ''}</p>
+    `).join('');
+  }
+  function readQuery() {
+    const inp = byId('searchInput') || byId('q');
+    return normalize(inp && inp.value);
+  }
 
-/* بحث محلي بالاسم/المק״ט */
-function searchLocal() {
-  const q = readQuery();
-  const info = byId('msg');
-  if (!q) { if (info) info.style.color='red', info.textContent='נא להזין מק״ט או שם'; return; }
+  /* بحث محلي */
+  function searchLocal() {
+    const q = readQuery();
+    const info = byId('msg');
+    if (!q) { if (info) info.style.color='red', info.textContent='נא להזין מק״ט או שם'; return; }
+    const hits = DB.filter(p => {
+      const sku = String(p.sku || '').toLowerCase();
+      const name = normalize(p.name);
+      return sku === q || sku.includes(q) || (name && name.includes(q));
+    });
+    renderList(hits);
+    if (info) info.style.color='#555', info.textContent = hits.length ? 'נמצא במחירון המקומי.' : 'לא נמצאה תוצאה מקומית.';
+  }
 
-  const hits = DB.filter(p => {
-    const sku = String(p.sku || '').toLowerCase();
-    const name = normalize(p.name);
-    return sku === q || sku.includes(q) || (name && name.includes(q));
+  /* فتح نتائج רנואר */
+  function searchRenuar() {
+    const raw = (byId('searchInput') || { value:'' }).value.trim();
+    if (!raw) { setText('msg', 'נא להזין ערך'); return; }
+    window.open(renUrl(raw), '_blank', 'noopener');
+  }
+
+  /* فتح الصفحة الرئيسية */
+  function openRenuar() {
+    window.open('https://www.renuar.co.il/home', '_blank', 'noopener');
+  }
+
+  /* تسجيل دخول وإضافة عناصر للـHost */
+  let isHost = false;
+  function hostLogin() {
+    const pass = (byId('hostPass') || { value:'' }).value;
+    if (pass === HOST_PASS) {
+      isHost = true;
+      if (byId('hostArea')) byId('hostArea').style.display = 'block';
+      if (byId('loginBox')) byId('loginBox').style.display = 'none';
+    } else { alert('סיסמה לא נכונה'); }
+  }
+  function addItem() {
+    if (!isHost) return alert('רק Host יכול להוסיף');
+    const sku   = (byId('sku')   || {value:''}).value.trim();
+    const name  = (byId('name')  || {value:''}).value.trim();
+    const price = (byId('price') || {value:''}).value.trim();
+    const link  = (byId('link')  || {value:''}).value.trim();
+    if (!sku || !name || !price) return alert('מלא מק״ט/שם/מחיר');
+    DB.push({ sku, name, price, link });
+    localStorage.setItem(LS_KEY, JSON.stringify(DB));
+    ['sku','name','price','link'].forEach(id => { const el = byId(id); if (el) el.value=''; });
+    renderList(DB);
+    alert('✅ تمت الإضافة');
+  }
+
+  /* تنظيف */
+  function clearAll() {
+    const inp = byId('searchInput');
+    if (inp) inp.value = '';
+    const res = byId('results');
+    if (res) res.innerHTML = '';
+    setText('msg', 'تم المسح. اكتب قيمة جديدة.');
+  }
+
+  /* ============ ربط الأزرار ============ */
+  function safeBind(id, fn) {
+    const el = byId(id);
+    if (el) el.addEventListener('click', e => { e.preventDefault(); try{ fn(); }catch(err){ console.error(err); alert('حدث خطأ'); } });
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    const inp = byId('searchInput');
+    if (inp) inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); searchLocal(); } });
+    safeBind('btnLocal', searchLocal);
+    safeBind('btnRenuar', searchRenuar);
+    safeBind('btnHome', openRenuar);
+    safeBind('btnClear', clearAll);
+    safeBind('btnLogin', hostLogin);
+    safeBind('btnAdd', addItem);
+    renderList(DB);
   });
-
-  renderList(hits);
-  if (info) info.style.color='#555', info.textContent = hits.length ? 'נמצא במחירון המקומי.' : 'לא נמצאה תוצאה מקומית.';
-}
-
-/* فتح نتائج רנואר */
-function searchRenuar() {
-  const raw = (byId('searchInput') || byId('q') || { value:'' }).value.trim();
-  if (!raw) { setText('msg', 'נא להזין ערך'); return; }
-  window.open(renUrl(raw), '_blank', 'noopener');
-}
-
-/* فتح الصفحة الرئيسية لرנואר */
-function openRenuar() {
-  window.open('https://www.renuar.co.il/home', '_blank', 'noopener');
-}
-
-/* تسجيل دخول وإضافة عناصر للـHost */
-let isHost = false;
-function hostLogin() {
-  const pass = (byId('hostPass') || byId('pass') || { value:'' }).value;
-  if (pass === HOST_PASS) {
-    isHost = true;
-    const area = byId('hostArea') || byId('admin');
-    const box  = byId('loginBox');
-    if (area) area.style.display = 'block';
-    if (box)  box.style.display  = 'none';
-  } else {
-    alert('סיסמה לא נכונה');
-  }
-}
-
-function addItem() {
-  if (!isHost) return alert('רק Host יכול להוסיף');
-  const sku   = (byId('sku')   || {value:''}).value.trim();
-  const name  = (byId('name')  || {value:''}).value.trim();
-  const price = (byId('price') || {value:''}).value.trim();
-  const link  = (byId('link')  || {value:''}).value.trim();
-  if (!sku || !name || !price) return alert('מלא מק״ט/שם/מחיר');
-
-  DB.push({ sku, name, price, link });
-  localStorage.setItem(LS_KEY, JSON.stringify(DB));
-
-  ['sku','name','price','link'].forEach(id => { const el = byId(id); if (el) el.value=''; });
-  renderList(DB);
-  alert('✅ تمت الإضافة');
-}
-
-/* تنظيف */
-function clearAll() {
-  const inp = byId('searchInput') || byId('q');
-  if (inp) inp.value = '';
-  const res = byId('results') || byId('localList');
-  if (res) res.innerHTML = '';
-  setText('msg', 'تم المسح. اكتب قيمة جديدة.');
-}
-
-/* ============ ربط الأزرار بشكل آمن ============ */
-function safeBind(id, fn) {
-  const el = byId(id);
-  if (el) el.addEventListener('click', e => { e.preventDefault(); try{ fn(); }catch(err){ console.error(err); alert('حدث خطأ في الزر'); } });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  // دعم Enter للبحث المحلي
-  const inp = byId('searchInput') || byId('q');
-  if (inp) inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); searchLocal(); } });
-
-  // ربط بالأسماء إن كانت موجودة في صفحتك
-  safeBind('btnLocal',  searchLocal);
-  safeBind('btnRenuar', searchRenuar);
-  safeBind('btnHome',   openRenuar);
-  safeBind('btnClear',  clearAll);
-  safeBind('btnLogin',  hostLogin);
-  safeBind('btnAdd',    addItem);
-
-  // إتاحة الدوال عالميًا أيضًا (لمن استخدم onclick في HTML)
-  window.searchLocal  = searchLocal;
-  window.searchRenuar = searchRenuar;
-  window.openRenuar   = openRenuar;
-  window.hostLogin    = hostLogin;
-  window.addItem      = addItem;
-  window.clearAll     = clearAll;
-
-  // عرض القائمة الحالية إن وُجدت
-  renderList(DB);
-});
-</script>
+  </script>
+</body>
+</html>

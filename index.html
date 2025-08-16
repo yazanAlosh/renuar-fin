@@ -12,15 +12,16 @@
       color: #222;
       text-align: center;
       min-height: 100vh;
-      background-image: url("logo.jpeg"); /* ← غيّر الاسم حسب ملف الصورة */
+      background-image: url("A9C545BF-4320-44BB-82C4-58F506EBD479.jpeg");
       background-size: cover;
       background-position: center;
       background-attachment: fixed;
     }
 
     header {
-      background: rgba(255,255,255,0.7);
+      background: rgba(255, 255, 255, 0.75);
       padding: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     }
 
     header img {
@@ -28,29 +29,41 @@
     }
 
     .box {
-      margin: 20px auto;
-      padding: 20px;
-      background: rgba(255,255,255,0.85);
-      border-radius: 10px;
+      margin: 30px auto;
+      padding: 25px;
+      background: rgba(255,255,255,0.9);
+      border-radius: 12px;
       width: 90%;
       max-width: 500px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
 
-    input, button {
+    input {
       padding: 10px;
-      margin: 5px;
-      border-radius: 5px;
-      border: 1px solid #aaa;
+      margin: 8px 0;
+      border-radius: 6px;
+      border: 1px solid #bbb;
+      width: 90%;
+      max-width: 300px;
     }
 
     button {
+      padding: 10px 18px;
+      margin: 6px;
+      border-radius: 8px;
+      border: none;
       cursor: pointer;
-      background: #333;
-      color: white;
+      font-size: 15px;
+      font-weight: bold;
+      transition: 0.3s;
+      background: linear-gradient(135deg, #000000, #434343);
+      color: #fff;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.3);
     }
 
     button:hover {
-      background: #555;
+      background: linear-gradient(135deg, #434343, #000000);
+      transform: scale(1.05);
     }
 
     #results {
@@ -62,7 +75,7 @@
 <body>
 
   <header>
-    <!-- الشعار -->
+    <!-- شعار -->
     <img src="logo.jpeg" alt="Renuar Logo"> 
   </header>
 
@@ -81,6 +94,7 @@
   <div class="box" id="loginBox">
     <h3>כניסת Host</h3>
     <input type="password" id="hostPass" placeholder="סיסמה">
+    <br>
     <button id="btnLogin">🔑 دخول</button>
   </div>
 
@@ -95,9 +109,8 @@
   </div>
 
   <script>
-    /* ============ إعدادات وتخزين محلي ============ */
     const LS_KEY = 'renuarDB';
-    const HOST_PASS = '1234';       // كلمة مرور Host
+    const HOST_PASS = '1234';
     let DB = [];
     try { DB = JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch { DB = []; }
 
@@ -173,7 +186,6 @@
       alert("✅ تمت الإضافة");
     }
 
-    // ربط الأزرار
     document.addEventListener("DOMContentLoaded", () => {
       $("btnLocal").onclick = searchLocal;
       $("btnRenuar").onclick = searchRenuar;

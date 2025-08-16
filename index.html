@@ -1,144 +1,184 @@
 <!DOCTYPE html>
-<html lang="he">
+<html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Renuar Finder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body {
-      margin: 0;
+    /* ===== خلفية الصفحة بصورة الشعار تغطي كل الشاشة ===== */
+    html, body { height: 100%; margin: 0 }
+    body{
       font-family: Arial, sans-serif;
-      background: linear-gradient(to bottom, #ffffff, #f2f6fa);
-      color: #222;
-      text-align: center;
+      color:#222;
+      text-align:center;
+      position:relative;
+      min-height:100%;
+      /* الخلفية: تغطية كاملة + ثبات عند التمرير */
+      background-image:url('A9C545BF-4320-44BB-82C4-58F506EBD479.jpeg');
+      background-size:cover;           /* تغطي كامل الشاشة */
+      background-position:center;      /* تتمركز */
+      background-attachment:fixed;     /* ثابتة عند السْكرول */
+      background-repeat:no-repeat;     /* بدون تكرار */
     }
-    header {
-      background: #0d1b2a;
-      padding: 15px;
+    /* طبقة تفتيح فوق الخلفية لتسهيل قراءة المحتوى */
+    body::before{
+      content:"";
+      position:fixed; inset:0;
+      background:linear-gradient(to bottom, rgba(255,255,255,.82), rgba(255,255,255,.9));
+      pointer-events:none; z-index:0;
     }
-    header img {
-      height: 60px;
+
+    /* حاوية المحتوى */
+    .container{
+      position:relative; z-index:1;
+      max-width:800px; margin:24px auto; padding:18px;
+      background:rgba(255,255,255,.95);
+      border-radius:12px;
+      box-shadow:0 10px 28px rgba(0,0,0,.15);
     }
-    h1 {
-      margin: 10px 0;
-      color: #0d1b2a;
+
+    header{
+      position:sticky; top:0; z-index:2;
+      background:rgba(0,36,77,.88);
+      color:#fff; padding:14px 16px; font-size:22px; font-weight:700;
+      backdrop-filter:saturate(1.2) blur(2px);
     }
-    input, button {
-      padding: 8px;
-      margin: 5px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+
+    input,button{
+      padding:10px; margin:6px; font-size:16px; border-radius:8px; border:1px solid #d0d6e0;
     }
-    button {
-      background: #003366;
-      color: white;
-      cursor: pointer;
+    input{ min-width:240px; }
+    button{
+      background:#003366; color:#fff; border:none; cursor:pointer;
+      box-shadow:0 6px 16px rgba(0,51,102,.25); font-weight:700;
+      transition:background .2s, transform .05s;
     }
-    button:hover {
-      background: #00509e;
+    button:hover{ background:#0050a8 }
+    button:active{ transform:translateY(1px) }
+
+    #results, #localList{
+      text-align:left; margin:16px auto 0; padding:12px;
+      background:#f7f9fc; border:1px solid #e7ebf2; border-radius:8px; min-height:48px;
+      max-width:760px;
     }
-    #results, #localList {
-      margin: 20px auto;
-      width: 80%;
-      padding: 15px;
-      border: 1px solid #ddd;
-      background: #fff;
-      border-radius: 6px;
-      text-align: left;
-    }
-    #hostArea {
-      display: none;
-      margin: 20px auto;
-      padding: 15px;
-      width: 80%;
-      border: 1px solid #bbb;
-      background: #f9f9f9;
-      border-radius: 6px;
-    }
+
+    /* لوحة Host */
+    #hostArea{ display:none; margin-top:18px; padding:14px; background:#eef5ff; border:1px solid #cfe0ff; border-radius:10px }
+    footer{ position:relative; z-index:1; color:#666; font-size:12px; padding:12px 0; }
   </style>
 </head>
 <body>
-  <!-- ===== شعار ===== -->
-  <header>
-    <img src="A9C545BF-4320-44BB-82C4-58F506EBD479.jpeg" alt="Renuar Logo">
-  </header>
+  <header>🔎 Renuar Finder</header>
 
-  <h1>🔎 Renuar Finder</h1>
+  <div class="container">
+    <h2>חפש פריט לפי מק״ט או שם</h2>
+    <input id="searchInput" type="text" placeholder="הזן מק״ט או שם פריט">
+    <br>
+    <button id="btnLocal">חפש באתר שלי</button>
+    <button id="btnRenuar">חפש ברנואר</button>
+    <button id="btnHome">פתח אתר רנואר</button>
+    <button id="btnClear">נקה</button>
+    <p id="msg"></p>
 
-  <!-- ===== البحث ===== -->
-  <input id="searchInput" type="text" placeholder="הכנס מק״ט או שם פריט...">
-  <br>
-  <button id="btnLocal">חפש באתר שלי</button>
-  <button id="btnRenuar">חפש ברנואר</button>
-  <button id="btnHome">פתח אתר רנואר</button>
-  <button id="btnClear">נקה</button>
-  <p id="msg">כתיב מק״ט או שם ולחץ חיפוש</p>
+    <div id="results"></div>
 
-  <div id="results"></div>
+    <hr style="margin:24px 0">
 
-  <!-- ===== دخول هوست ===== -->
-  <div id="loginBox">
-    <h3>🔑 כניסת Host</h3>
-    <input id="hostPass" type="password" placeholder="סיסמה (1234)">
-    <button id="btnLogin">כניסה</button>
+    <!-- دخول Host -->
+    <div id="loginBox">
+      <h3>🔑 כניסת Host</h3>
+      <input id="hostPass" type="password" placeholder="סיסמה (1234)">
+      <button id="btnLogin">כניסה</button>
+    </div>
+
+    <!-- إضافة منتجات للـHost -->
+    <div id="hostArea">
+      <h3>➕ הוספת מוצר</h3>
+      <input id="sku"   type="text" placeholder="מק״ט">
+      <input id="name"  type="text" placeholder="שם פריט">
+      <input id="price" type="number" placeholder="מחיר (₪)">
+      <input id="link"  type="text" placeholder="קישור (אופציונלי)">
+      <button id="btnAdd">הוסף</button>
+
+      <div id="localList"></div>
+    </div>
   </div>
 
-  <!-- ===== منطقة هوست لإضافة منتجات ===== -->
-  <div id="hostArea">
-    <h3>➕ הוספת פריט</h3>
-    <input id="sku" type="text" placeholder="מק״ט">
-    <input id="name" type="text" placeholder="שם פריט">
-    <input id="price" type="number" placeholder="מחיר (₪)">
-    <input id="link" type="text" placeholder="קישור (רנואר)">
-    <button id="btnAdd">הוסף</button>
-    <div id="localList"></div>
-  </div>
+  <footer>© 2025 Renuar Finder – static demo</footer>
 
-  <!-- ===== سكربت الأزرار ===== -->
+  <!-- ===== جافاسكربت: تشغيل الأزرار والبحث والـHost ===== -->
   <script>
-  const LS_KEY = 'renuarDB';
-  const HOST_PASS = '1234';
-  let DB = [];
-  try { DB = JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch { DB = []; }
-  const $ = (sel, root=document) => root.querySelector(sel);
-  const byId = id => document.getElementById(id) || null;
-  function setText(id, txt){ const el=byId(id); if(el) el.textContent=txt; }
-  function normalize(str){ return (str||'').trim().toLowerCase(); }
-  function renUrl(q){ return 'https://www.renuar.co.il/catalogsearch/result/?q='+encodeURIComponent(q); }
-  function renderList(items){
-    const cont = byId('results')||byId('localList');
-    if(!cont) return;
-    if(!items.length){ cont.innerHTML='אין תוצאות.'; return; }
-    cont.innerHTML = items.map(p=>`<p><b>${p.name}</b> (SKU: ${p.sku}) — ₪${p.price} 
-      ${p.link?<a href="${p.link}" target="_blank">קישור</a>:''}</p>`).join('');
-  }
-  function readQuery(){ return normalize(byId('searchInput').value); }
-  function searchLocal(){
-    const q=readQuery(); if(!q) return setText('msg','נא להזין מק״ט או שם');
-    const hits=DB.filter(p=>p.sku.toLowerCase().includes(q)||normalize(p.name).includes(q));
-    renderList(hits); setText('msg', hits.length?'נמצא':'לא נמצאה תוצאה');
-  }
-  function searchRenuar(){ const q=byId('searchInput').value.trim(); if(!q) return; window.open(renUrl(q),'_blank'); }
-  function openRenuar(){ window.open('https://www.renuar.co.il/home','_blank'); }
-  let isHost=false;
-  function hostLogin(){ if(byId('hostPass').value===HOST_PASS){isHost=true; byId('hostArea').style.display='block'; byId('loginBox').style.display='none';}else alert('סיסמה לא נכונה'); }
-  function addItem(){
-    if(!isHost) return alert('רק Host יכול להוסיף');
-    const sku=byId('sku').value.trim(), name=byId('name').value.trim(), price=byId('price').value.trim(), link=byId('link').value.trim();
-    if(!sku||!name||!price) return alert('מלא את כל השדות');
-    DB.push({sku,name,price,link}); localStorage.setItem(LS_KEY,JSON.stringify(DB));
-    ['sku','name','price','link'].forEach(id=>byId(id).value=''); renderList(DB);
-  }
-  function clearAll(){ byId('searchInput').value=''; byId('results').innerHTML=''; setText('msg','נמחק'); }
-  function safeBind(id,fn){ const el=byId(id); if(el) el.addEventListener('click',fn); }
-  document.addEventListener('DOMContentLoaded',()=>{
-    safeBind('btnLocal',searchLocal);
-    safeBind('btnRenuar',searchRenuar);
-    safeBind('btnHome',openRenuar);
-    safeBind('btnClear',clearAll);
-    safeBind('btnLogin',hostLogin);
-    safeBind('btnAdd',addItem);
-    renderList(DB);
-  });
+    /* إعدادات وتخزين */
+    const LS_KEY = 'renuarDB';
+    const HOST_PASS = '1234';
+    let DB = [];
+    try{ DB = JSON.parse(localStorage.getItem(LS_KEY) || '[]'); }catch{ DB = []; }
+
+    const byId = id => document.getElementById(id) || null;
+    const setText = (id, t)=>{ const el=byId(id); if(el) el.textContent=t; };
+    const normalize = s => (s||'').replace(/[\\u0591-\\u05C7]/g,'').replace(/\\s+/g,' ').trim().toLowerCase();
+
+    function renUrl(q){ return 'https://www.renuar.co.il/catalogsearch/result/?q='+encodeURIComponent(q); }
+
+    function renderList(items){
+      const cont = byId('results') || byId('localList');
+      if(!cont) return;
+      if(!items || !items.length){ cont.innerHTML = 'אין תוצאות עדיין.'; return; }
+      cont.innerHTML = items.map(p => \`
+        <p><b>\${p.name || ''}</b> (SKU: \${p.sku || ''}) — ₪\${p.price || '-'}
+        \${p.link ? ' — <a href="\'+p.link+\'" target="_blank" rel="noopener">קישור</a>' : ''}</p>
+      \`).join('');
+    }
+
+    function readQuery(){ return normalize(byId('searchInput')?.value); }
+
+    /* بحث محلي */
+    function searchLocal(){
+      const q = readQuery(); const info = byId('msg');
+      if(!q){ if(info){info.style.color='red'; info.textContent='נא להזין מק״ט או שם';} return; }
+      const hits = DB.filter(p=>{
+        const sku=String(p.sku||'').toLowerCase();
+        const name=normalize(p.name);
+        return sku===q || sku.includes(q) || (name && name.includes(q));
+      });
+      renderList(hits);
+      if(info){ info.style.color='#555'; info.textContent = hits.length ? 'נמצא במחירון המקומי.' : 'לא נמצאה תוצאה מקומית.'; }
+    }
+
+    /* رנואר */
+    function searchRenuar(){ const raw = byId('searchInput')?.value.trim(); if(!raw) return setText('msg','נא להזין ערך'); window.open(renUrl(raw),'_blank','noopener'); }
+    function openRenuar(){ window.open('https://www.renuar.co.il/home','_blank','noopener'); }
+
+    /* Host */
+    let isHost=false;
+    function hostLogin(){ if((byId('hostPass')?.value||'')===HOST_PASS){ isHost=true; byId('hostArea').style.display='block'; byId('loginBox').style.display='none'; } else alert('סיסמה לא נכונה'); }
+    function addItem(){
+      if(!isHost) return alert('רק Host יכול להוסיף');
+      const sku=byId('sku').value.trim(), name=byId('name').value.trim(), price=byId('price').value.trim(), link=byId('link').value.trim();
+      if(!sku||!name||!price) return alert('מלא מק״ט/שם/מחיר');
+      DB.push({sku,name,price,link});
+      localStorage.setItem(LS_KEY, JSON.stringify(DB));
+      ['sku','name','price','link'].forEach(id=>byId(id).value='');
+      renderList(DB);
+      alert('✅ تمت الإضافة');
+    }
+
+    /* تنظيف */
+    function clearAll(){ const i=byId('searchInput'); if(i) i.value=''; byId('results').innerHTML=''; setText('msg','تم المسح. اكتب قيمة جديدة.'); }
+
+    /* ربط الأزرار */
+    function bind(id, fn){ const el=byId(id); if(el) el.addEventListener('click', e=>{ e.preventDefault(); try{ fn(); }catch(err){ console.error(err); alert('حدث خطأ'); }}); }
+
+    document.addEventListener('DOMContentLoaded', ()=>{
+      const inp=byId('searchInput'); if(inp) inp.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); searchLocal(); }});
+      bind('btnLocal',  searchLocal);
+      bind('btnRenuar', searchRenuar);
+      bind('btnHome',   openRenuar);
+      bind('btnClear',  clearAll);
+      bind('btnLogin',  hostLogin);
+      bind('btnAdd',    addItem);
+      renderList(DB);
+    });
   </script>
 </body>
 </html>

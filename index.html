@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Renuar Finder</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#007bff" />
+</head>
+<body>
+  <header><h1>🔎 Renuar Finder</h1></header>
+
+  <main class="wrap">
+    <!-- شريط البحث -->
+    <section class="card">
+      <div class="row">
+        <input id="q" type="text" placeholder="הכנס מק״ט או שם פריט" />
+        <button onclick="checkPrice()">בדוק מחיר</button>
+        <button class="ghost" onclick="searchInFrame()">חפש ברנואר (במסגרת)</button>
+        <button class="ghost" onclick="openNew()">פתח ברנואר בטאב חדש</button>
+        <button class="ghost" onclick="openHome()">פתח אתר רנואר</button>
+        <button class="ghost" onclick="clearAll()">נקה</button>
+      </div>
+      <div id="msg" class="muted">טיפ: Enter يفحص السعر ويُجهز رابط רנואר.</div>
+      <div id="priceBox"></div>
+      <div id="debug" class="muted small"></div>
+      <iframe id="renFrame" title="תוצאות חיפוש רנואר"></iframe>
+    </section>
+
+    <!-- نتائج قاعدة محلية -->
+    <section class="card">
+      <strong>תוצאות מהבסיס המקומי:</strong>
+      <div id="localList" class="muted">لا توجد نتائج محلية بعد.</div>
+    </section>
+
+    <!-- لوحة الـ Host -->
+    <section class="card">
+      <h3>👨‍💻 כניסת Host (إضافة بيانات הפריטים)</h3>
+      <div id="loginBox" class="row">
+        <input id="pass" type="password" placeholder="סיסמה (افتراضي: 1234)" />
+        <button onclick="login()">כניסה</button>
+      </div>
+      <div id="admin" class="admin">
+        <div class="row">
+          <input id="sku" type="text" placeholder="מק״ט" />
+          <input id="name" type="text" placeholder="שם פריט" />
+          <input id="price" type="number" placeholder="מחיר (بدون ₪)" />
+          <input id="link" type="text" placeholder="קישור רנואר (اختياري)" />
+          <button onclick="addItem()">➕ הוסף</button>
+        </div>
+        <div class="row">
+          <input type="file" id="fileInput" accept=".csv,.json" />
+          <button class="ghost" onclick="importFile()">ייבוא CSV/JSON</button>
+          <button class="ghost" onclick="exportDB()">ייצוא JSON</button>
+          <button class="ghost" onclick="wipeDB()">איפוס הכל</button>
+          <span class="badge">סה״כ: <span id="cnt">0</span></span>
+        </div>
+        <table class="table">
+          <thead><tr><th>מק״ט</th><th>שם</th><th>מחיר</th><th>קישור</th><th>מחיקה</th></tr></thead>
+          <tbody id="tbl"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer>© Renuar Finder — static site</footer>
+
+  <script src="assets/js/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(()=>{});
+      });
+    }
+  </script>
+</body>
+</html>
